@@ -14,7 +14,19 @@ app.use(bodyParser.json());
 // Import Routes
 const postRoute = require('./routes/posts');
 
-app.use('/api/posts', postRoute);
+
+const authMiddleware = (req, res, next) => {
+    const userId = req.params.userId;
+  
+    if (!userId) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+  
+    req.userId = userId;
+    next();
+  };
+
+app.use('/api/posts/', postRoute);
 // app.use('/api/:uid', postRoute);
 app.get('/:userId', async (req, res) => {
     try {
@@ -25,6 +37,18 @@ app.get('/:userId', async (req, res) => {
         res.json({ message: error });
     }
 });
+
+// const authMiddleware = (req, res, next) => {
+//     const userId = req.params.userId;
+  
+//     if (!userId) {
+//       return res.status(401).json({ message: "User not authenticated" });
+//     }
+  
+//     req.userId = userId;
+//     next();
+//   }
+  
 
 
 // Connect to database

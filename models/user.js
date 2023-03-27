@@ -4,7 +4,8 @@ const Schema = mongoose.Schema;
 
 const userSchema = new Schema({
     username: { type: String, required: true, unique: true },
-    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    posts1:[{type: mongoose.Schema.Types.ObjectId, ref: 'Post' }]
   });
 
   

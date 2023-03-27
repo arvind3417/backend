@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const Post = require('../models/Post');
 const User = require('../models/user');
+const Comment = require('../models/comment');
+
 
 // const followUser = require('../follow');
 
@@ -17,21 +19,22 @@ router.get('/', async (req, res) => {
 });
 
 // CREATE NEW POST
-router.post('/', async (req, res) => {
-    const post = new Post({
-        title: req.body.title,
-        description: req.body.description,
-    });
-
-    const savedPost = await post.save()
-        .then((result) => {
-            console.log(result);
-            res.status(200).send(result);
-        }).catch((err) => {
-            res.status(404).send(err);
-            console.log(err);
+router.post('/:userId/post', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+        const post = new Post({
+            title: req.body.title,
+            description: req.body.description,
         });
+        await post.save();
+        user.posts1.push(post);
+        await user.save();
+        res.status(200).send(post);
+    } catch (error) {
+        res.status(500).send({ message: error.message });
+    }
 });
+
 
 // GET SPECIFIC POST
 router.get('/:postId', async (req, res) => {
@@ -91,7 +94,10 @@ const followUser = async (followerId, followeeUsername) => {
 //how to write code for follow user in nodejs?
 router.post('/follow/:followerId/:followeeId', async (req, res) => {
     try {
-       
+        if (req.params.followerId === req.params.followeeId) {
+            return res.status(400).json({ message: "Follower and followee cannot be the same" });
+          }
+      
     //   const user = await User.findOne({ username: req.params.name });
 
         // await followUser(req.params.userId,"sai")
@@ -105,6 +111,34 @@ router.post('/follow/:followerId/:followeeId', async (req, res) => {
         res.status(400).json({ message: error });
     }
 }); 
+
+// CREATE NEW COMMENT FOR A POST
+router.post('/:userId/:postId/comments', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+
+        const post = await Post.findById(req.params.postId);
+        if (!post) {
+            return res.status(404).json({ message: 'Post not found' });
+        }
+        const comment = new Comment({
+            content: req.body.content,
+            author: user.username,
+            post: post._id
+        });
+        const savedComment = await comment.save();
+
+        post.comments.push(savedComment._id);
+
+        await post.save();
+        
+
+        res.status(200).json(savedComment);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 router.post('/user', async (req, res) => {
     try {
